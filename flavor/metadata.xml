@@ -5,7 +5,7 @@
 
     <item-types>
         <module-types sep="/">
-            <module-type name="package" />
+            <module-type name="package" icon="folder.gif" />
         </module-types>
         <nested-types sep="/">
             <nested-type name="type"/>
@@ -15,11 +15,11 @@
             <nested-type name="parameter"/>
         </nested-types>
         <virtual-types>
-            <virtual-type nature="root"/>
-            <virtual-type nature="folder" name="package"/>
-            <virtual-type nature="module"/>
-            <virtual-type nature="file"/>
-            <virtual-type nature="bundle"/>
+            <virtual-type nature="root" icon="root.gif"/>
+            <virtual-type nature="folder" name="package" icon="dir.gif"/>
+            <virtual-type nature="module" icon="dir.gif"/>
+            <virtual-type nature="file" icon="file.gif"/>
+            <virtual-type nature="bundle" icon="bundle.gif"/>
         </virtual-types>
     </item-types>
     <dependency-types>

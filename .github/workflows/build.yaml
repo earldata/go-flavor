@@ -49,6 +49,12 @@ jobs:
         file: ./flavor/metadata.xml
         old-string: "0.0.1"
         new-string: ${{ needs.version.outputs.version }}
+    - name: Find and Replace Version in flavor metadata
+      uses: MathieuSoysal/replace-string-in-file@v1.0.0
+      with:
+        file: ./src/goflavor.go
+        old-string: "0.0.1"
+        new-string: ${{ needs.version.outputs.version }}
     - name: Build
       run: |
         mkdir -p ../flavor/bin
