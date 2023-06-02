@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<runner type="app">
+    <params>
+        <param key="module-dir" name="Module directory" type="file" mode="dirOnly" required="true">
+            <description>
+                Directory of go module
+            </description>
+        </param>
+        <param key="pattern" name="Package pattern" type="string" required="true" default="./...">
+            <description>
+                Package pattern
+            </description>
+        </param>
+    </params>
+    <app exe="${flavor.home}/bin/go-flavor">
+        <arg>-output</arg>
+        <arg>${s101g.tmpfile}</arg>
+        <arg>-pattern</arg>
+        <arg>${params.pattern}</arg>
+        <arg>${params.module-dir}</arg>
+    </app>
+</runner>

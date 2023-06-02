@@ -1,0 +1,114 @@
+name: Build and Release Go-Flavor for Structure 101
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    name: Determine version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.gitversion.outputs.semVer }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0
+      with:
+        versionSpec: '5.x'
+    - name: Determine Version
+      uses: gittools/actions/gitversion/execute@v0
+      id: gitversion
+
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    name: Build go flavor for ${{ matrix.os }}
+    needs: version
+      
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
+    - name: Find and Replace Version in flavor metadata
+      uses: MathieuSoysal/replace-string-in-file@v1.0.0
+      with:
+        file: ./flavor/metadata.xml
+        old-string: "0.0.1"
+        new-string: ${{ needs.version.outputs.version }}
+    - name: Build
+      run: |
+        mkdir -p ../flavor/bin
+        go build -o ../flavor/bin/ -v ./...
+        mkdir -p ../release/com.earldata.s101.golangflavor_${{ needs.version.outputs.version }}
+        cp -R ../flavor/* ../release/com.earldata.s101.golangflavor_${{ needs.version.outputs.version }}
+      working-directory: ./src
+    - name: Zip artifact
+      uses: thedoctor0/zip-release@0.7.1
+      with:
+        filename: 'go-flavor.zip'
+        directory: './release'
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: go-flavor-${{ matrix.os }}
+        path: ./release/go-flavor.zip
+
+  release:
+    if: github.ref == 'refs/heads/main'
+    needs: 
+    - build
+    - version
+    name: Release go flavor
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ needs.version.outputs.version }}
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+
+  release-artifacts:
+    if: github.ref == 'refs/heads/main'
+    needs: 
+    - release
+    - version
+    name: Release go flavor artifacts
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v2
+      id: download
+      with:
+        name: go-flavor-${{ matrix.os }}
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.release.outputs.upload_url }}
+        asset_path: ${{steps.download.outputs.download-path}}/go-flavor.zip
+        asset_name: go-flavor-${{ matrix.os }}-${{ needs.version.outputs.version }}.zip
+        asset_content_type: application/zip
