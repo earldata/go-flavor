@@ -59,8 +59,8 @@ jobs:
       run: |
         mkdir -p ../flavor/bin
         go build -o ../flavor/bin/ -v ./...
-        mkdir -p ../release/com.earldata.s101.golangflavor_${{ needs.version.outputs.version }}
-        cp -R ../flavor/* ../release/com.earldata.s101.golangflavor_${{ needs.version.outputs.version }}
+        mkdir -p ../release/com.earldata.golangflavor_${{ needs.version.outputs.version }}
+        cp -R ../flavor/* ../release/com.earldata.golangflavor_${{ needs.version.outputs.version }}
       working-directory: ./src
     - name: Zip artifact
       uses: thedoctor0/zip-release@0.7.1

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<flavor name="com.earldata.s101.golangflavor" version="0.0.1" availability="public">
+<flavor name="com.earldata.golangflavor" version="0.0.1" availability="public">
     <provider name="Tim Grant" url="http://github.com/earldata/go-flavor" email="tgrant@earldata.com" />
     <description>Import/include dependencies from Golang sources</description>
 
@@ -9,10 +9,8 @@
         </module-types>
         <nested-types sep="/">
             <nested-type name="type"/>
-            <nested-type name="method"/>
             <nested-type name="field"/>
             <nested-type name="function"/>
-            <nested-type name="parameter"/>
         </nested-types>
         <virtual-types>
             <virtual-type nature="root" icon="root.gif"/>
@@ -24,6 +22,5 @@
     </item-types>
     <dependency-types>
         <dependency-type name="imports"/>
-        <dependency-type name="references"/>
     </dependency-types>
 </flavor>
