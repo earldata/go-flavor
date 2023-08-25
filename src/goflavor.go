@@ -18,8 +18,6 @@ type Module struct {
 	Id         string      `xml:"id,attr"`
 	Type       string      `xml:"type,attr"`
 	Name       string      `xml:"name,attr"`
-	Fat        int         `xml:"fat,attr"`
-	Size       int         `xml:"size,attr"`
 	Submodules []SubModule `xml:"submodule"`
 }
 
@@ -28,6 +26,8 @@ type SubModule struct {
 	Id      string   `xml:"id,attr"`
 	Type    string   `xml:"type,attr"`
 	Name    string   `xml:"name,attr"`
+	Fat     int      `xml:"fat,attr"`
+	Size    int      `xml:"size,attr"`
 }
 
 type Dependency struct {
@@ -81,15 +81,15 @@ func main() {
 		i := 0
 		for _, file := range pkg.Syntax {
 			for _, decl := range file.Decls {
-				switch decl.(type) {
+				switch decl := decl.(type) {
 				case *ast.GenDecl:
-					for _, spec := range decl.(*ast.GenDecl).Specs {
-						switch spec.(type) {
+					for _, spec := range decl.Specs {
+						switch spec := spec.(type) {
 						case *ast.TypeSpec:
-							submodules = append(submodules, SubModule{Id: (pkg.ID + strconv.Itoa(i)), Type: "type", Name: spec.(*ast.TypeSpec).Name.Name})
+							submodules = append(submodules, SubModule{Id: (pkg.ID + strconv.Itoa(i)), Type: "type", Name: spec.Name.Name})
 							i++
 						case *ast.ValueSpec:
-							for _, name := range spec.(*ast.ValueSpec).Names {
+							for _, name := range spec.Names {
 								submodules = append(submodules, SubModule{Id: (pkg.ID + strconv.Itoa(i)), Type: "field", Name: name.Name})
 								i++
 							}
@@ -100,14 +100,15 @@ func main() {
 						}
 					}
 				case *ast.FuncDecl:
-					submodules = append(submodules, SubModule{Id: (pkg.ID + strconv.Itoa(i)), Type: "function", Name: decl.(*ast.FuncDecl).Name.Name})
+					loc := (fset.Position(decl.End()).Line) - (fset.Position(decl.Pos()).Line + 1)
+					submodules = append(submodules, SubModule{Id: (pkg.ID + strconv.Itoa(i)), Type: "function", Name: decl.Name.Name, Fat: Fat(decl), Size: loc})
 					i++
 				default:
 					fmt.Printf("Unknown type: %T\n", decl)
 				}
 			}
 		}
-		modules = append(modules, Module{Id: pkg.ID, Type: "package", Name: pkg.ID, Fat: 0, Size: 0, Submodules: submodules})
+		modules = append(modules, Module{Id: pkg.ID, Type: "package", Name: pkg.ID, Submodules: submodules})
 		for pkgid := range pkg.Imports {
 			dependencies = append(dependencies, Dependency{From: pkg.ID, To: pkgid, Type: "imports"})
 		}
