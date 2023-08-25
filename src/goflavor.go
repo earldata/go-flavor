@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"log"
 	"os"
+	"strconv"
 
 	"golang.org/x/tools/go/packages"
 )
@@ -60,13 +61,13 @@ func main() {
 
 	pattern := flag.String("pattern", "./...", "Go package pattern")
 	output := flag.String("output", "go-flavor-output.xml", "Output file")
-	// flag.Parse()
-	// if flag.NArg() != 1 {
-	// 	log.Fatal("Expecting a single argument: directory of module")
-	// }
+	flag.Parse()
+	if flag.NArg() != 1 {
+		log.Fatal("Expecting a single argument: directory of module")
+	}
 
 	var fset = token.NewFileSet()
-	cfg := &packages.Config{Fset: fset, Mode: mode, Dir: "../../wayfinder"} //flag.Args()[0]}
+	cfg := &packages.Config{Fset: fset, Mode: mode, Dir: flag.Args()[0]}
 	pkgs, err := packages.Load(cfg, *pattern)
 	if err != nil {
 		log.Fatal(err)
@@ -77,6 +78,7 @@ func main() {
 
 	for _, pkg := range pkgs {
 		var submodules []SubModule
+		i := 0
 		for _, file := range pkg.Syntax {
 			for _, decl := range file.Decls {
 				switch decl.(type) {
@@ -84,10 +86,12 @@ func main() {
 					for _, spec := range decl.(*ast.GenDecl).Specs {
 						switch spec.(type) {
 						case *ast.TypeSpec:
-							submodules = append(submodules, SubModule{Id: pkg.ID, Type: "type", Name: spec.(*ast.TypeSpec).Name.Name})
+							submodules = append(submodules, SubModule{Id: (pkg.ID + strconv.Itoa(i)), Type: "type", Name: spec.(*ast.TypeSpec).Name.Name})
+							i++
 						case *ast.ValueSpec:
 							for _, name := range spec.(*ast.ValueSpec).Names {
-								submodules = append(submodules, SubModule{Id: pkg.ID, Type: "field", Name: name.Name})
+								submodules = append(submodules, SubModule{Id: (pkg.ID + strconv.Itoa(i)), Type: "field", Name: name.Name})
+								i++
 							}
 						case *ast.ImportSpec:
 							// ignore
@@ -96,7 +100,8 @@ func main() {
 						}
 					}
 				case *ast.FuncDecl:
-					submodules = append(submodules, SubModule{Id: pkg.ID, Type: "function", Name: decl.(*ast.FuncDecl).Name.Name})
+					submodules = append(submodules, SubModule{Id: (pkg.ID + strconv.Itoa(i)), Type: "function", Name: decl.(*ast.FuncDecl).Name.Name})
+					i++
 				default:
 					fmt.Printf("Unknown type: %T\n", decl)
 				}
